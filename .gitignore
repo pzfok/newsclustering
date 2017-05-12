@@ -1,0 +1,6 @@
+manifest.json
+target/
+data/
+pio.log
+/pio.sbt
+.idea/

@@ -1,0 +1,19 @@
+{
+  "id": "default",
+  "description": "Default settings",
+  "engineFactory": "com.dfsx.newsclustering.DfsxNewsClusteringEngine",
+  "datasource": {
+    "params" : {
+      "appName": "DfsxNewsClustering"
+    }
+  },
+  "algorithms": [
+    {
+      "name": "SinglePass",
+      "params": {
+        "threshold" : 0.60,
+        "maxClusterElementsCount" : 2000
+      }
+    }
+  ]
+}
