@@ -76,6 +76,6 @@ class TFIDFModel(
 }
 
 class PreparedData(
-  val tfIdf: TFIDFModel,
+  val tfIdfModel: TFIDFModel,
   val namedEntitySet: Set[Int]
 ) extends Serializable

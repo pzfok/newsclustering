@@ -1,6 +1,5 @@
 package com.dfsx.newsclustering
 
-import com.dfsx.newsclustering.singlepass.SinglePass
 import org.apache.predictionio.controller.P2LAlgorithm
 import org.apache.spark.SparkContext
 import grizzled.slf4j.Logger
@@ -13,89 +12,38 @@ import scala.collection.mutable
   */
 class Algorithm(val ap: AlgorithmParams)
   // extends PAlgorithm if Model contains RDD[]
-  extends P2LAlgorithm[PreparedData, Model, Query, PredictedResult] {
+  extends P2LAlgorithm[PreparedData, CorpusModel, Query, PredictedResult] {
 
   @transient lazy val logger = Logger[this.type]
 
-  val mqReceiver = if (Algorithm.shouldBeLoaded) new MQReceiver(ap) else null
-  val mqSender = if (Algorithm.shouldBeLoaded) new MQSender else null
-//  val categoryModelMap: mutable.Map[String, SinglePass] = if (Algorithm.shouldBeLoaded) mqReceiver.categoryModelMap else null
+  val _mQReceiver: MQReceiver = if (Algorithm.shouldBeLoaded) new MQReceiver(ap) else null
+  val _mQSender: MQSender = if (Algorithm.shouldBeLoaded) new MQSender else null
+  val _algorithmHelper: AlgorithmHelper = if (Algorithm.shouldBeLoaded) new AlgorithmHelper(_mQSender, _mQReceiver) else null
 
   if (!Algorithm.shouldBeLoaded) {
     Algorithm.shouldBeLoaded = true
   }
 
-  def train(sc: SparkContext, data: PreparedData): Model = {
-    new Model(data.tfIdf, data.namedEntitySet, ap)
+  def train(sc: SparkContext, data: PreparedData): CorpusModel = {
+    new CorpusModel(data.tfIdfModel, data.namedEntitySet)
   }
 
-  def predict(model: Model, query: Query): PredictedResult = {
+  def predict(model: CorpusModel, query: Query): PredictedResult = {
     var predictedResult: PredictedResult = null
     try {
       predictedResult = query.action_type match {
-        case 0 => {
-          var newsArray: Array[News] = null
-          try {
-            newsArray = query.news.get
-          } catch {
-            case e: NoSuchElementException => throw MappingException(getClass.getName + ": The field news(id or timestamp or content) is required.", e)
-          }
+        case 0 =>
+          _algorithmHelper.handleClusterRequest(model, query)
 
-          //model.cluster(categoryModelMap, newsArray)
-          mqSender.sendObject(MQMessage(0, Some(ClusterMessage(model, newsArray)), None))
+        case 1 =>
+          _algorithmHelper.handleInfoRequest(query)
 
-          val categoryModelMap = mqReceiver.categoryModelMap
-          PredictedResult(Some(categoryModelMap.keys.size), None, None, None)
-        }
-        case 1 => {
-          val category = query.category.getOrElse("")
-          val minNewsCount = query.min_news_count.getOrElse(1)
-          val maxClusterCount = query.max_cluster_count.getOrElse(10)
-          // 可能 throw NoSuchElementException
-          val categoryModelMap = mqReceiver.categoryModelMap
-          val singlePassModel = categoryModelMap(category)
-          PredictedResult(None, Some(singlePassModel.getSummaries(minNewsCount, maxClusterCount)), None, None)
-        }
-        case 2 => {
-          val id = query.id.get
-          val category = query.category.get
+        case 2 =>
+          _algorithmHelper.handleModifyRequest(query)
 
-          mqSender.sendObject(MQMessage(1, None, Some(ModifyMessage(id, category))))
+        case 3 =>
+          _algorithmHelper.handleRecommendRequest(query)
 
-          PredictedResult(None, None, Some(id), None)
-        }
-        case 3 => { // 新闻推荐
-          val id = query.id.get
-          val topN = query.top.getOrElse(10)
-
-          // 首先查找该id属于的模型
-          val categoryModelMap = mqReceiver.categoryModelMap
-          val categoryModelpair = categoryModelMap.find(pair => {
-            val findResult = pair._2.elementQueue.find(e => e.asInstanceOf[singlepass.News].id == id)
-
-            if (findResult.nonEmpty) {
-              true
-            } else {
-              false
-            }
-          })
-
-          if (categoryModelpair.isEmpty) {
-            logger.error("categoryModelpair is empty")
-            return PredictedResult(None, None, None, Some(mutable.ListBuffer[Long]()))
-          }
-
-          val pair = categoryModelpair.get
-          val singlePassModel = pair._2
-
-          PredictedResult(None, None, None, Some(singlePassModel.getTopNSimilarities(id, topN)))
-        }
-//        case 4 =>  { // for debug
-//          categoryModelMap.values.zipWithIndex.foreach(s => {
-//            println(s"category id: ${s._2}, element queue size: ${s._1.elementQueue.size}")
-//          })
-//          PredictedResult(None, None, Some(-9), None)
-//        }
         case _ => throw MappingException(getClass.getName + ": Unknown action.", new Exception("Unknown action."))
       }
     } catch {
