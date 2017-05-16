@@ -1,10 +1,9 @@
 package com.dfsx.newsclustering
 
 import com.dfsx.newsclustering.singlepass.JavaUtils
+
 import org.apache.predictionio.controller.PPreparator
-//import org.apache.predictionio.data.storage.Event
 import org.apache.spark.SparkContext
-//import org.apache.spark.SparkContext._
 import org.apache.spark.mllib.feature.{HashingTF, IDF, IDFModel}
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.regression.LabeledPoint

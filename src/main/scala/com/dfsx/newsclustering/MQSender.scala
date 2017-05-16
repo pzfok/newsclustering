@@ -1,9 +1,9 @@
 package com.dfsx.newsclustering
 
-import javax.jms.{MessageProducer, ResourceAllocationException, Session}
-
 import org.apache.activemq.ActiveMQConnectionFactory
 import org.json4s.MappingException
+
+import javax.jms.{MessageProducer, ResourceAllocationException, Session}
 
 /**
   * Created by ifpelset on 4/17/17.

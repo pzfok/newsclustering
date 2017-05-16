@@ -13,7 +13,7 @@ class DataSource(val dsp: DataSourceParams)
   extends PDataSource[TrainingData,
       EmptyEvaluationInfo, Query, EmptyActualResult] {
 
-  @transient lazy val logger = Logger[this.type]
+  @transient private lazy val _logger = Logger[this.type]
 
   override
   def readTraining(sc: SparkContext): TrainingData = {
@@ -33,7 +33,7 @@ class DataSource(val dsp: DataSourceParams)
         )
       } catch {
         case e: Exception => {
-          logger.error(s"Failed to get properties ${x.properties} " +
+          _logger.error(s"Failed to get properties ${x.properties} " +
             s" Exception: ${e}.")
           throw e
         }

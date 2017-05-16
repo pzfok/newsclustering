@@ -2,10 +2,7 @@ package com.dfsx.newsclustering
 
 import org.apache.predictionio.controller.P2LAlgorithm
 import org.apache.spark.SparkContext
-import grizzled.slf4j.Logger
 import org.json4s.MappingException
-
-import scala.collection.mutable
 
 /**
   * Created by ifpelset on 3/23/17.
@@ -14,14 +11,12 @@ class Algorithm(val ap: AlgorithmParams)
   // extends PAlgorithm if Model contains RDD[]
   extends P2LAlgorithm[PreparedData, CorpusModel, Query, PredictedResult] {
 
-  @transient lazy val logger = Logger[this.type]
+  val _mQReceiver: MQReceiver = if (Algorithm._shouldBeLoaded) new MQReceiver(ap) else null
+  val _mQSender: MQSender = if (Algorithm._shouldBeLoaded) new MQSender else null
+  val _algorithmHelper: AlgorithmHelper = if (Algorithm._shouldBeLoaded) new AlgorithmHelper(_mQSender, _mQReceiver) else null
 
-  val _mQReceiver: MQReceiver = if (Algorithm.shouldBeLoaded) new MQReceiver(ap) else null
-  val _mQSender: MQSender = if (Algorithm.shouldBeLoaded) new MQSender else null
-  val _algorithmHelper: AlgorithmHelper = if (Algorithm.shouldBeLoaded) new AlgorithmHelper(_mQSender, _mQReceiver) else null
-
-  if (!Algorithm.shouldBeLoaded) {
-    Algorithm.shouldBeLoaded = true
+  if (!Algorithm._shouldBeLoaded) {
+    Algorithm._shouldBeLoaded = true
   }
 
   def train(sc: SparkContext, data: PreparedData): CorpusModel = {
@@ -57,5 +52,5 @@ class Algorithm(val ap: AlgorithmParams)
 }
 
 object Algorithm {
-  var shouldBeLoaded = false // 用来控制pio deploy的第二次创建Algorithm执行的代码
+  var _shouldBeLoaded = false // 用来控制pio deploy的第二次创建Algorithm执行的代码
 }

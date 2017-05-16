@@ -9,7 +9,7 @@ import scala.collection.mutable
   * Created by ifpelset on 5/16/17.
   */
 class ModifyReceiver(val _algorithmParams: AlgorithmParams) {
-  @transient lazy val logger = Logger[this.type]
+  @transient private lazy val _logger = Logger[this.type]
 
   private def findNewsById(model: SinglePass, id: Long): Option[singlepass.News] = {
     val findResult = model.elementQueue.find(e => e.asInstanceOf[singlepass.News].id == id)
@@ -23,7 +23,7 @@ class ModifyReceiver(val _algorithmParams: AlgorithmParams) {
 
   private def putCategoryToModelMapIfNotExist(category: String, categoryToModelMap: mutable.Map[String, SinglePass]): Unit = {
     if (!categoryToModelMap.contains(category)) {
-      logger.debug(s"create ${category}'s SinglePass Model")
+      _logger.debug(s"create $category's SinglePass Model")
       categoryToModelMap.put(category, SinglePass(_algorithmParams.threshold, _algorithmParams.maxClusterElementsCount))
     }
   }
@@ -32,7 +32,7 @@ class ModifyReceiver(val _algorithmParams: AlgorithmParams) {
     model.remove(news)
   }
 
-  private def reclusterNewsFromNewModel(news: singlepass.News, model: SinglePass): Unit = {
+  private def clusterNewsFromNewModel(news: singlepass.News, model: SinglePass): Unit = {
     model.clustering(news)
   }
 
@@ -54,7 +54,7 @@ class ModifyReceiver(val _algorithmParams: AlgorithmParams) {
         removeNewsFromOldModel(news, pair._2)
 
         // 修改之后要对该新闻重新聚类
-        reclusterNewsFromNewModel(news, categoryToModelMap(category))
+        clusterNewsFromNewModel(news, categoryToModelMap(category))
 
         modifyNewsCategory(news, category)
         true
@@ -71,7 +71,7 @@ class ModifyReceiver(val _algorithmParams: AlgorithmParams) {
       val model = pair._2
       // 若model中不存在任何一个聚类了，清理map中该(category,model)项
       if (model.getClusterCount < 1) {
-        logger.debug(s"remove ${category} from singlePassModelMap")
+        _logger.debug(s"remove $category from singlePassModelMap")
         categoryToModelMap.remove(category)
       }
     }

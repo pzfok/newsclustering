@@ -1,9 +1,8 @@
 package com.dfsx.newsclustering
 
-import javax.jms._
-
 import com.dfsx.newsclustering.singlepass.SinglePass
 import grizzled.slf4j.Logger
+import javax.jms._
 import org.apache.activemq.ActiveMQConnectionFactory
 
 import scala.collection.mutable
@@ -12,7 +11,7 @@ import scala.collection.mutable
   * Created by ifpelset on 4/17/17.
   */
 class MQReceiver(algorithmParams: AlgorithmParams) extends MessageListener {
-  @transient lazy val logger = Logger[this.type]
+  @transient private lazy val _logger = Logger[this.type]
 
   private var _mqConnection: Connection = _
   private var _mqReceiverHelper: MQReceiverHelper = new MQReceiverHelper(algorithmParams)
@@ -51,13 +50,13 @@ class MQReceiver(algorithmParams: AlgorithmParams) extends MessageListener {
                 _mqReceiverHelper.doModify(mQMessage)
 
               case _ =>
-                logger.warn("Unknown user-defined MQMessage type")
+                _logger.warn("Unknown user-defined MQMessage type")
             }
           case _ =>
-            logger.warn("Unknown object message type")
+            _logger.warn("Unknown object message type")
         }
       case _ =>
-        logger.warn("Unknown message type")
+        _logger.warn("Unknown message type")
     }
   }
 
