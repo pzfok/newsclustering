@@ -68,13 +68,13 @@
    [ifpelset@archlinux ~]$ cp clustering-classification-data/newsclustering/data newsclustering/
    ```
 
-6. 导入事先准备的好的“中新网”十个分类的json文件到HBase中
+6. 导入事先准备的好的“中新网”30万新闻预料的json文件到HBase中
 
    ```bash
    # 1. 切换目录到“数据”目录下
    [ifpelset@archlinux ~]$ cd newsclustering/data
    # 2. 导入中新网数据到HBase中
-   [ifpelset@archlinux data]$ pio import --appid <您的AppId> --input ./中新网指定分类的新闻.json
+   [ifpelset@archlinux data]$ pio import --appid <您的AppId> --input ./中新网30万新闻预料库.json
    ```
 
 7. ​ 构建源码
@@ -86,7 +86,7 @@
    [ifpelset@archlinux newsclustering]$ pio build --verbose
    ```
 
-8.  下载分词数据包并放置到相应目录
+8.  下载[分词数据包](http://pan.baidu.com/s/1gfzLCYn)并放置到相应目录
 
    ```bash
    # 1. 创建/var/local/data目录并给予当前用户读写执行权限
@@ -134,6 +134,6 @@
    ```
 
 12.  测试分类
-   通过任意工具，设置Content-Type值为applicaiton/json;charset=UTF-8，然后向http://localhost:8002/queries.json发送Post请求即可。请参考newsclassification/data目录下的test_xxx.json文件。
+   通过任意工具，设置**Content-Type**值为**applicaiton/json;charset=UTF-8**，然后向*http://localhost:8002/queries.json*发送**Post**请求即可。json的请求与响应格式请参考**newsclassification/data**目录下的**test_xxx.json**文件。
 
    ​
